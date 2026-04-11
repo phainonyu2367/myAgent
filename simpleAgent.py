@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import openai
-import tavily
+from tavily import TavilyClient
 import requests
 import re
 import os
@@ -40,31 +40,37 @@ Action的格式必须是以下之一：
 def get_weather(city: str) -> str:
     """根据城市名称返回规整化的实时天气信息
         @Parameter:
-            - 
+            - city: str  
+                城市名称
+        @Return:
+            - formatted_result: str
+                规整后的天气信息，包括温度，云覆盖度，紫外线强度，可见度
     """
+
+    url = f"https://wttr.in/{city}?format=j1"
     try:
         # 查询天气信息
-        url = f"wttr.in/{city}:format=j1"
         response = requests.get(url)
         response.raise_for_status()
         jsonResponse = response.json()
 
         # 规整天气信息
         current_condition = jsonResponse["current_condition"][0]
-        tempC = current_condition["tempC"]
+        tempC = current_condition["temp_C"]
         cloudcover = current_condition["cloudcover"]
         uvIndex = current_condition["uvIndex"]
         visibility = current_condition["visibility"]
 
-        formatted_message = f"""
+        formatted_result = f"""
                             temperature: {tempC}celsius,
                             cloudcover: {cloudcover},
                             uvIndex: {uvIndex},
                             visibility: {visibility}
                             """
+        
+        return formatted_result
     except requests.exceptions.RequestException as e:
         return f"天气信息访问失败，错误信息:{e}"
     except (KeyError, IndexError) as e:
         return f"触发{e}, 可能是城市名输入错误"
-    
-
+        
