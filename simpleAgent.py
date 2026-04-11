@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import openai
-from tavily import TavilyClient
+from tavily import TavilyClient, errors
 import requests
 import re
 import os
@@ -69,8 +69,49 @@ def get_weather(city: str) -> str:
                             """
         
         return formatted_result
+    
     except requests.exceptions.RequestException as e:
         return f"天气信息访问失败，错误信息:{e}"
+    
     except (KeyError, IndexError) as e:
         return f"触发{e}, 可能是城市名输入错误"
+
+def get_attraction(city: str, weather: str) -> str:
+    """根据城市名和天气情况搜索推荐的旅游景点
+        @Parameter:
+            - city: str
+                城市名称
+            - weather: str
+                对应城市天气情况
+        @Return
+            - result: str
+                查询结果
+    """
+    tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
+    message = f"'{city}'在'{weather}'天气下最值得去的旅游景点推荐及理由"
+
+    try:
+        # 发起tavily搜索
+        response = tavily_client.search(query=message, 
+                                        search_depth='basic',
+                                        include_answer='advanced')
+
+        # 整理答案信息
+        result = ""
+        answer = response["answer"]
+        if answer:
+            results = f"搜索结果: {answer}"
+            return results
+        
+        results = []
+        for result in response.get("results", []):
+            results.append(f"- {result['title']}: {result['content']}")
+
+        if not results:
+            return "未找到对应景点推荐"
+        
+        return f"搜索结果: {results}"
+
+    except errors as e:
+        return f"tavily搜索失败，错误信息{e}"
         
