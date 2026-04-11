@@ -11,6 +11,7 @@ BASE_URL = os.getenv("BASE_URL")
 API_KEY = os.getenv("API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 MODEL_ID = os.getenv("MODEL_ID")
+MAX_AGENT_LOOP = 5
 
 AGENT_SYSTEM_PROMPT = """
 你是一个智能旅行助手。你的任务是分析用户的请求，并使用可用工具一步步地解决问题。
@@ -121,7 +122,7 @@ available_tools = {
     }
 
 class OpenAICompatibleClient:
-
+    """OpenAI 通用兼容客户端"""
     def __init__(self):
         self.model = MODEL_ID
         self.client = openai.OpenAI(
@@ -149,3 +150,57 @@ class OpenAICompatibleClient:
         except Exception as e:
             print(f"调用模型api时发生错误")
             return "错误：调用语言模型服务时发生错误"
+
+LLM_Client = OpenAICompatibleClient()
+
+########################   agent loop   ###############################
+if __name__ == '__main__':
+    # 提示词初始化
+    print("你好，我是一名旅行助手，你可以输入想去旅行的城市")
+    city = input()
+    user_prompt = f"你好，请帮我查询一下今天{city}的天气，然后根据天气推荐一个合适的旅游景点。"
+    history_prompt = [f"用户请求: {user_prompt}"]
+
+    for i in range(MAX_AGENT_LOOP):
+        print(f"---第{i}轮循环---")
+
+        # 构建prompt
+        full_prompt = "\n".join(history_prompt)
+
+        # 调用LLM进行思考
+        response = LLM_Client.get_response(full_prompt)
+
+        # 模型Thought-Action匹配与截断
+        match = re.search(r'(Thought:.*?Action:.*?)(?=\n\s*(?:Thought:|Action:|Observation:)|\Z)', response, re.DOTALL)
+        if match:
+            truncated = match.group(1).strip()
+            if truncated != response.strip():
+                response = truncated
+        print(f"模型输出:\n{response}\n")
+        history_prompt.append(response)
+
+        # 解析并执行行动
+        action_match = re.search(r"Action: (.*)", response, re.DOTALL)
+        if not action_match:
+            observation = f"Observation: 错误：未能解析到Action字段。请确保你的回复严格遵循'Thought: ... Action: ...'的格式"
+            print(f"{observation}\n" + "="*40)
+            history_prompt.append(observation)
+            continue
+        action_str = action_match.group(1).strip()
+
+        if action_str.startswith("Finish"):
+            final_answer = re.match(r"Finish\[(.*)\]", action_str).group(1)
+            print(f"任务完成\n {final_answer}")
+            break
+
+        tool_name = re.search(r"(\w+)\(", action_str).group(1)
+        args_str = re.search(r"\((.*)\)", action_str).group(1)
+        kwargs = dict(re.findall(r'(\w+)="([^"]*)"', args_str))
+
+        if tool_name in available_tools:
+            observation = available_tools[tool_name](**kwargs)
+        # 记录观察结果
+
+        observation = f"Observation: {observation}"
+        print(f"{observation}\n" + "="*40)
+        history_prompt.append(observation)
