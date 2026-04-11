@@ -114,4 +114,38 @@ def get_attraction(city: str, weather: str) -> str:
 
     except errors as e:
         return f"tavily搜索失败，错误信息{e}"
+
+available_tools = {
+        "get_weather": get_weather,
+        "get_attraction": get_attraction
+    }
+
+class OpenAICompatibleClient:
+
+    def __init__(self):
+        self.model = MODEL_ID
+        self.client = openai.OpenAI(
+                api_key=API_KEY,
+                base_url=BASE_URL
+            )
         
+    def get_response(self, message: str) -> str:
+        print(f"正在调用大语言模型, model_id: {MODEL_ID}")
+        try:
+            messages = [
+                    {"role": "system", "content": AGENT_SYSTEM_PROMPT},
+                    {"role": "user", "content": message}
+                ]
+            
+            response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    stream=False
+                )
+            
+            answer = response.choices[0].message.content
+            return answer
+        
+        except Exception as e:
+            print(f"调用模型api时发生错误")
+            return "错误：调用语言模型服务时发生错误"

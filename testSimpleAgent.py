@@ -11,6 +11,10 @@ class TestSimpleAgent(unittest.TestCase):
         weather = get_weather("Shanghai")
         attraction = get_attraction("Shanghai", weather)
         print(attraction)
+
+    def testOpenAICompatibleClient(self):
+        client = OpenAICompatibleClient()
+        print(client.get_response('你好'))
         
 if __name__ == '__main__':
     unittest.main()
