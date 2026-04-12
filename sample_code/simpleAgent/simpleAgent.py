@@ -162,7 +162,7 @@ if __name__ == '__main__':
     history_prompt = [f"用户请求: {user_prompt}"]
 
     for i in range(MAX_AGENT_LOOP):
-        print(f"---第{i}轮循环---")
+        print(f"---第{i + 1}轮循环---")
 
         # 构建prompt
         full_prompt = "\n".join(history_prompt)
