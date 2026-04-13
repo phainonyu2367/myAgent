@@ -8,6 +8,7 @@ dependencies = [
     "dotenv>=0.9.9",
     "openai>=2.31.0",
     "requests>=2.33.1",
+    "serpapi>=1.0.2",
     "tavily-python>=0.7.23",
     "torch>=2.11.0",
     "transformers>=5.5.3",
