@@ -1,6 +1,6 @@
 import unittest
 
-from sample_code.simpleAgent.simpleAgent import *
+from simpleAgent import *
 
 class TestSimpleAgent(unittest.TestCase):
     def testGetWeather(self):

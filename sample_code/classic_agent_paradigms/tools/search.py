@@ -5,6 +5,8 @@ import tavily
 from tavily.errors import *
 from serpapi.exceptions import *
 
+load_dotenv()
+
 def quickSearch(query: str) -> str:
     """
     Quick Search tool based on tavily, helping agent getting summarized answer
@@ -31,7 +33,7 @@ def quickSearch(query: str) -> str:
         print(f"---{e}Failed to get quick research results from tavily---")
         return "Failed to get results from quickSearch, please call again on the tool"
 
-def search(query: str, serpapi_api_key: str = None) -> str:
+def search(query: str) -> str:
     """
     Detailed search that will return more detailed answers
     @param
@@ -51,7 +53,7 @@ def search(query: str, serpapi_api_key: str = None) -> str:
                 "hl": "zh-cn"
             }
         
-        results = client.serach(params)
+        results = client.search(params)
         # 智能解析:优先寻找最直接的答案
         if "answer_box_list" in results:
             return "\n".join(results["answer_box_list"])
